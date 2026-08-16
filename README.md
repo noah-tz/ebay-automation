@@ -6,26 +6,28 @@ Automated end-to-end testing for eBay shopping flows using **Python**, **Playwri
 
 ```
 ebay-automation/
-├── pages/                  # Page Object Model classes
-│   ├── base_page.py       # BasePage - common actions, waits, screenshots
-│   ├── login_page.py      # LoginPage - authentication / guest mode
-│   ├── search_page.py     # SearchPage - search, price filter, pagination
-│   ├── product_page.py    # ProductPage - variant selection, add to cart
-│   └── cart_page.py       # CartPage - cart total verification
-├── bp/                     # Business Process layer (orchestration)
+├── pages/                  # Page Object Model (element repositories)
+│   ├── base_page.py       # BasePage - base class for all page objects
+│   ├── login_page.py      # LoginPage - selectors for login/auth
+│   ├── search_page.py     # SearchPage - selectors for search results
+│   ├── product_page.py    # ProductPage - selectors for product detail
+│   └── cart_page.py       # CartPage - selectors for shopping cart
+├── bp/                     # Business Process layer (all logic)
+│   ├── base_bp.py         # BaseBP - common actions (click, fill, wait...)
 │   └── shopping_bp.py     # ShoppingBP - full E2E flow orchestration
 ├── tests/
-│   ├── conftest.py        # Pytest fixtures (browser, page, POs, BPs)
-│   └── test_ebay_e2e.py   # E2E tests + data-driven scenarios (thin)
+│   ├── conftest.py        # Pytest fixtures (browser, page, BP)
+│   └── test_ebay_e2e.py   # E2E test (thin, data-driven from YAML)
 ├── utils/
 │   ├── data_loader.py     # YAML/JSON/CSV loader for Data-Driven testing
 │   ├── price_parser.py    # Price parsing utility (multi-currency)
+│   ├── screenshot.py      # Screenshot capture utility
 │   └── logger.py          # Structured logging (file + console)
 ├── config/
 │   └── settings.py        # Central config loaded from .env
 ├── data/
 │   └── test_data.yaml     # Test scenarios (Data-Driven inputs)
-├── reports/               # Generated: screenshots, traces, HTML reports
+├── reports/               # Generated: screenshots, traces, Allure reports
 ├── .env                   # Environment configuration
 ├── pytest.ini             # Pytest configuration
 ├── run_tests.ps1          # Run tests + generate Allure report
@@ -34,9 +36,10 @@ ebay-automation/
 
 ## Design Principles
 
-- **POM (Page Object Model)**: Each page has its own class with encapsulated selectors and actions.
-- **OOP**: Inheritance from `BasePage`, encapsulation of page-specific logic.
-- **SRP**: Each class has a single responsibility (search, cart, etc.).
+- **POM (Page Object Model)**: Each page has its own class as a pure element repository (selectors only).
+- **BP (Business Process)**: All interaction logic lives in BPs. `BaseBP` provides common actions; `ShoppingBP` orchestrates the full flow.
+- **OOP**: Inheritance (`BaseBP` → `ShoppingBP`), encapsulation of page-specific selectors.
+- **SRP**: Pages know *what* elements exist; BPs know *how* to interact with them.
 - **Data-Driven**: Test inputs loaded from `data/test_data.yaml` at runtime.
 - **Configuration**: All settings via `.env` file - no hardcoded values.
 
