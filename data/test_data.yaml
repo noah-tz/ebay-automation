@@ -1,0 +1,40 @@
+# Test Data for eBay E2E Automation
+# Data-Driven test inputs loaded at runtime
+
+test_scenarios:
+  - name: "Search shoes under $220"
+    query: "shoes"
+    max_price: 220
+    limit: 5
+    currency: "USD"
+
+  - name: "Search headphones under $100"
+    query: "headphones"
+    max_price: 100
+    limit: 3
+    currency: "USD"
+
+  - name: "Search laptop bag under $50"
+    query: "laptop bag"
+    max_price: 50
+    limit: 4
+    currency: "USD"
+
+# Default scenario used for main test
+default_scenario:
+  query: "shoes"
+  max_price: 220
+  limit: 5
+  currency: "USD"
+
+# Browser configurations
+browser_configs:
+  - browser: "chromium"
+    headless: false
+    viewport_width: 1280
+    viewport_height: 720
+
+  - browser: "firefox"
+    headless: true
+    viewport_width: 1920
+    viewport_height: 1080
