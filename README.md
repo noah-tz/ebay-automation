@@ -12,9 +12,11 @@ ebay-automation/
 │   ├── search_page.py     # SearchPage - search, price filter, pagination
 │   ├── product_page.py    # ProductPage - variant selection, add to cart
 │   └── cart_page.py       # CartPage - cart total verification
+├── bp/                     # Business Process layer (orchestration)
+│   └── shopping_bp.py     # ShoppingBP - full E2E flow orchestration
 ├── tests/
-│   ├── conftest.py        # Pytest fixtures (browser, page, PO instances)
-│   └── test_ebay_e2e.py   # E2E tests + data-driven scenarios
+│   ├── conftest.py        # Pytest fixtures (browser, page, POs, BPs)
+│   └── test_ebay_e2e.py   # E2E tests + data-driven scenarios (thin)
 ├── utils/
 │   ├── data_loader.py     # YAML/JSON/CSV loader for Data-Driven testing
 │   ├── price_parser.py    # Price parsing utility (multi-currency)
@@ -26,6 +28,7 @@ ebay-automation/
 ├── reports/               # Generated: screenshots, traces, HTML reports
 ├── .env                   # Environment configuration
 ├── pytest.ini             # Pytest configuration
+├── run_tests.ps1          # Run tests + generate Allure report
 └── requirements.txt       # Python dependencies
 ```
 
@@ -77,21 +80,24 @@ DEFAULT_CURRENCY=USD
 ## Running Tests
 
 ```bash
-# Run all E2E tests
+# Run all tests + generate Allure report (recommended)
+.\run_tests.ps1
+
+# Or run manually:
 pytest
 
 # Run specific test
 pytest tests/test_ebay_e2e.py::TestEbayE2EFlow::test_full_shopping_flow
 
-# Run data-driven tests
+# Run data-driven tests only
 pytest tests/test_ebay_e2e.py::TestEbayDataDriven
 
 # Run with visible browser (non-headless)
 HEADLESS=false pytest
 
-# Generate Allure report
-pytest --alluredir=reports/allure-results
-allure serve reports/allure-results
+# Generate Allure report manually (after running tests)
+allure generate reports/allure-results -o reports/allure-report --clean
+allure open reports/allure-report
 ```
 
 ## Reports
@@ -118,11 +124,14 @@ playwright show-trace reports/traces/trace.zip
 ## Limitations & Assumptions
 
 - **Guest Mode / CAPTCHA**: eBay blocks direct cart page access (`cart.ebay.com`) for guest users with a CAPTCHA challenge. The framework handles this with a multi-strategy approach:
-  1. First tries to read the subtotal from the Add-to-Cart overlay (shown after adding last item)
-  2. Then tries to navigate to cart via the overlay's "See in cart" link (bypasses CAPTCHA)
-  3. Falls back to collected item prices (verified at add-time)
+  1. Minicart hover — hovers the cart icon to read the dropdown total (primary, no CAPTCHA).
+  2. Cart page — reads subtotal if navigated via the overlay "See in cart" link.
+  3. Collected item prices — sums prices verified during the add-to-cart phase.
+  4. Overlay subtotal — uses the last ATC overlay subtotal text.
   - **For full cart page verification**: provide `EBAY_USERNAME` and `EBAY_PASSWORD` in `.env`
+- **Pagination limit**: Search pagination is capped at 3 pages maximum to avoid excessive load on eBay and keep test runtime reasonable. The spec requires collecting items "until limit is reached or pages run out" — in practice, the price filter ensures sufficient results on the first 1–2 pages.
 - **Currency**: Prices displayed depend on eBay's geo-detection. The parser handles USD, ILS, EUR, GBP formats.
 - **Dynamic UI**: eBay frequently changes its UI. Selectors use `data-testid`, `aria-label`, and semantic patterns for robustness.
 - **Rate Limiting**: eBay may throttle rapid requests. `SLOW_MO=100` is set by default. Increase if encountering blocks.
-- **Viewport**: Dynamically detects screen resolution to match the actual display (avoids mobile/responsive layouts).
+- **Viewport**: Dynamically detects screen resolution on Windows to match the actual display (avoids mobile/responsive layouts). Falls back to configured values on Linux/Mac.
+- **Items with unparseable prices**: If the server-side price filter was applied but the client-side parser cannot extract a numeric price (e.g., "Price varies"), the item is still included (marked "unverified") since eBay's filter already validated it.

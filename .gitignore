@@ -15,13 +15,8 @@ venv/
 .vscode/
 *.swp
 
-# Reports (generated)
-reports/screenshots/
-reports/traces/
-reports/logs/
-reports/allure-results/
-reports/report.html
-reports/assets/
+# Reports (all generated content)
+reports/
 
 # OS
 .DS_Store

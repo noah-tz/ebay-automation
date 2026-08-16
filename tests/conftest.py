@@ -1,13 +1,14 @@
 """
 Pytest fixtures for eBay E2E Automation.
-Sets up browser, page, and page objects for tests.
+Sets up browser, page, and Business Process (BP) instance.
+Integrates with Allure for rich reporting (screenshots on failure).
 """
+import allure
 import pytest
-from pathlib import Path
 from playwright.sync_api import sync_playwright, Browser, BrowserContext, Page
 
 from config import settings
-from pages import LoginPage, SearchPage, ProductPage, CartPage
+from bp import ShoppingBP
 from utils.logger import logger
 
 
@@ -29,14 +30,11 @@ def browser():
 @pytest.fixture(scope="function")
 def context(browser: Browser):
     """Create a new browser context with realistic screen size."""
-    # Use a common desktop resolution dynamically
     import ctypes
     try:
-        # Get actual screen resolution on Windows
         user32 = ctypes.windll.user32
         screen_width = user32.GetSystemMetrics(0)
         screen_height = user32.GetSystemMetrics(1)
-        # Use slightly smaller than full screen (like a maximized window)
         vw = min(screen_width - 100, 1920)
         vh = min(screen_height - 150, 1080)
     except Exception:
@@ -50,11 +48,9 @@ def context(browser: Browser):
         locale="en-US",
         screen={"width": vw, "height": vh},
     )
-    # Start tracing
     ctx.tracing.start(screenshots=True, snapshots=True, sources=True)
     yield ctx
 
-    # Save trace
     trace_path = settings.TRACE_DIR / "trace.zip"
     ctx.tracing.stop(path=str(trace_path))
     logger.info(f"Trace saved: {trace_path}")
@@ -70,27 +66,31 @@ def page(context: BrowserContext):
     pg.close()
 
 
-# ─── Page Object Fixtures ──────────────────────────────────────
+# ─── Business Process Fixture ─────────────────────────────────
 
 @pytest.fixture
-def login_page(page: Page) -> LoginPage:
-    """Provide LoginPage instance."""
-    return LoginPage(page)
+def shopping_bp(page: Page) -> ShoppingBP:
+    """Provide ShoppingBP instance."""
+    return ShoppingBP(page)
 
 
-@pytest.fixture
-def search_page(page: Page) -> SearchPage:
-    """Provide SearchPage instance."""
-    return SearchPage(page)
+# ─── Allure: attach screenshot on test failure ─────────────────
 
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    """Attach a screenshot to Allure report when a test fails."""
+    outcome = yield
+    report = outcome.get_result()
 
-@pytest.fixture
-def product_page(page: Page) -> ProductPage:
-    """Provide ProductPage instance."""
-    return ProductPage(page)
-
-
-@pytest.fixture
-def cart_page(page: Page) -> CartPage:
-    """Provide CartPage instance."""
-    return CartPage(page)
+    if report.when == "call" and report.failed:
+        page_fixture = item.funcargs.get("page")
+        if page_fixture:
+            try:
+                screenshot = page_fixture.screenshot(full_page=True)
+                allure.attach(
+                    screenshot,
+                    name="failure_screenshot",
+                    attachment_type=allure.attachment_type.PNG,
+                )
+            except Exception:
+                pass
