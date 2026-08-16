@@ -1,0 +1,71 @@
+2026-08-17 01:33:13,876 | INFO     | ebay_automation | browser:18 | Launching browser: chromium (headless=False)
+2026-08-17 01:33:25,598 | INFO     | ebay_automation | context:44 | Using viewport: 1820x930
+2026-08-17 01:33:26,177 | INFO     | ebay_automation | test_full_shopping_flow:39 | ============================================================
+2026-08-17 01:33:26,177 | INFO     | ebay_automation | test_full_shopping_flow:40 | E2E Test: 'shoes' under $220, limit=5
+2026-08-17 01:33:26,178 | INFO     | ebay_automation | test_full_shopping_flow:41 | ============================================================
+2026-08-17 01:33:26,179 | INFO     | ebay_automation | _skip_login:93 | Skipping login - using guest mode
+2026-08-17 01:33:26,179 | INFO     | ebay_automation | navigate:28 | Navigating to: https://www.ebay.com
+2026-08-17 01:33:28,084 | WARNING  | ebay_automation | _skip_login:98 | Got error page, clicking 'Go to homepage'
+2026-08-17 01:33:28,415 | DEBUG    | ebay_automation | click:44 | Clicking: Go to homepage
+2026-08-17 01:33:30,956 | INFO     | ebay_automation | search_items_by_name_under_price:134 | searchItemsByNameUnderPrice('shoes', maxPrice=220, limit=5)
+2026-08-17 01:33:31,827 | DEBUG    | ebay_automation | click:44 | Clicking: #gh-ac
+2026-08-17 01:33:33,001 | DEBUG    | ebay_automation | fill:49 | Filling '#gh-ac' with: shoes
+2026-08-17 01:33:42,121 | INFO     | ebay_automation | _apply_price_filter:231 | Applying price filter: max=220
+2026-08-17 01:33:42,121 | INFO     | ebay_automation | navigate:28 | Navigating to: https://www.ebay.com/sch/i.html?_nkw=shoes&_sacat=0&_from=R40&_trksid=m570.l1313&_udlo=0&_udhi=220
+2026-08-17 01:33:49,150 | INFO     | ebay_automation | search_items_by_name_under_price:147 | Processing page 1...
+2026-08-17 01:33:55,338 | INFO     | ebay_automation | search_items_by_name_under_price:159 |   [1/5] Women's Colorful Air Cushion Athletic Sh... @ ILS 90.43 (ILS)
+2026-08-17 01:33:55,338 | INFO     | ebay_automation | search_items_by_name_under_price:159 |   [2/5] White Athletic Sneakers size... @ ILS 66.49 (ILS)
+2026-08-17 01:33:55,339 | INFO     | ebay_automation | search_items_by_name_under_price:159 |   [3/5] Women's Fashion Sneakers Blue with Gold ... @ ILS 66.49 (ILS)
+2026-08-17 01:33:55,339 | INFO     | ebay_automation | search_items_by_name_under_price:159 |   [4/5] Purple Slip On Shoes size 10.5... @ ILS 74.47 (ILS)
+2026-08-17 01:33:55,339 | INFO     | ebay_automation | search_items_by_name_under_price:159 |   [5/5] Quick Dry Aqua Socks Adults+Kids Water S... @ ILS 3.96 (ILS)
+2026-08-17 01:33:55,339 | INFO     | ebay_automation | search_items_by_name_under_price:185 | searchItemsByNameUnderPrice: found 5 items
+2026-08-17 01:33:58,443 | INFO     | ebay_automation | take_screenshot:28 | Screenshot saved: C:\Users\Noah\Documents\projects\AI_demo\ebay-automation\reports\screenshots\search_results_shoes_20260817_013355.png
+2026-08-17 01:33:58,444 | INFO     | ebay_automation | add_items_to_cart:301 | addItemsToCart(5 URLs)
+2026-08-17 01:33:58,444 | INFO     | ebay_automation | add_items_to_cart:305 |   [1/5] Opening product...
+2026-08-17 01:33:58,444 | INFO     | ebay_automation | navigate:28 | Navigating to: https://www.ebay.com/itm/147452425923?_skw=shoes&itmmeta=01M06BB98QBCDG0SN2E4WP6BEG&hash=item2254d976c3:g:mvEAAeSwzZZqX-0a&itmprp=enc%3AAQALAAAAwGfYFPkwiKCW4ZNSs2u11xCT5lEfS6b0m2iG3JpsfZx8MYUxSjMEB3zrb2gspbbi8ZS0YxmiYripUtkq%2Fk7vwXwICnWcgJ7lbg0qzowEyF%2Bap3XXC3%2BnTedm9tp5y1aDJS61FvAybzo6%2FgxK%2BIneQs33A85HY9RfmbLY95yBWN21p%2FYy6TkdzrnmqGCkRBcHrq7pVBmSTAl8eUIzkXarBRcxUPmiWljYNCejb65mATlOWCZ8LWQ76okVyXfVpj%2F9NA%3D%3D%7Ctkp%3ABlBMUOaUrcuBaA
+2026-08-17 01:34:14,792 | DEBUG    | ebay_automation | click:44 | Clicking: Add to Cart
+2026-08-17 01:34:17,927 | INFO     | ebay_automation | _capture_overlay_subtotal:484 | Overlay subtotal: $70.40
+2026-08-17 01:34:17,928 | INFO     | ebay_automation | _click_add_to_cart:465 | Item added to cart (overlay confirmed)
+2026-08-17 01:34:19,588 | INFO     | ebay_automation | take_screenshot:28 | Screenshot saved: C:\Users\Noah\Documents\projects\AI_demo\ebay-automation\reports\screenshots\item_1_added_to_cart_20260817_013417.png
+2026-08-17 01:34:19,589 | INFO     | ebay_automation | add_items_to_cart:327 |   [1] Added to cart | price=US $30.60 | overlay_subtotal=$70.40
+2026-08-17 01:34:22,031 | INFO     | ebay_automation | add_items_to_cart:305 |   [2/5] Opening product...
+2026-08-17 01:34:22,032 | INFO     | ebay_automation | navigate:28 | Navigating to: https://www.ebay.com/itm/147452427525?_skw=shoes&itmmeta=01M06BB98QXZ7Q8A0MW1V1RAES&hash=item2254d97d05:g:trIAAeSwW3hqX-25&itmprp=enc%3AAQALAAAAwGfYFPkwiKCW4ZNSs2u11xAph1bNuh1InHdswWkfmYOZ46ZzIKCtu1a3LTd2ksQ%2BNXP8fasmC%2FGwsttlkj7CQXUB3ndjz1hFjI549SoGqslkgfide%2FvhEeS69lUrEhaFpBs8l1kbZ7lO%2B%2BIchF4Cpu9gRRkoc%2BTGe%2BlNh1YGGzmIhQnXxAAKh2%2BjJTZZIhsZuAlulSyRNYu0G8oF%2BrOFcVet%2FKY2ol%2BsesevQz6ZnkETmPx7wayQfxXkx90wjck9Ug%3D%3D%7Ctkp%3ABlBMUOiUrcuBaA
+2026-08-17 01:34:35,152 | DEBUG    | ebay_automation | click:44 | Clicking: Add to Cart
+2026-08-17 01:34:38,064 | INFO     | ebay_automation | _capture_overlay_subtotal:484 | Overlay subtotal: $50.04
+2026-08-17 01:34:38,065 | INFO     | ebay_automation | _click_add_to_cart:465 | Item added to cart (overlay confirmed)
+2026-08-17 01:34:39,650 | INFO     | ebay_automation | take_screenshot:28 | Screenshot saved: C:\Users\Noah\Documents\projects\AI_demo\ebay-automation\reports\screenshots\item_2_added_to_cart_20260817_013438.png
+2026-08-17 01:34:39,651 | INFO     | ebay_automation | add_items_to_cart:327 |   [2] Added to cart | price=US $22.50 | overlay_subtotal=$50.04
+2026-08-17 01:34:42,138 | INFO     | ebay_automation | add_items_to_cart:305 |   [3/5] Opening product...
+2026-08-17 01:34:42,139 | INFO     | ebay_automation | navigate:28 | Navigating to: https://www.ebay.com/itm/147452422997?_skw=shoes&itmmeta=01M06BB98Q2RKX1DVWQANEXXPJ&hash=item2254d96b55:g:pdYAAeSw7EhqX-xU&itmprp=enc%3AAQALAAAAwGfYFPkwiKCW4ZNSs2u11xDHjLxRZjhaFR%2F6PriJVxo11w9LRZXp4bszdUH5X4%2FQc9cFLnQHt%2B0Tn9Um7ZeFzzWC3YwLOcgZMndsHfFABCPZ%2F%2BWOKhEWabCCPkhU1q9T9F%2B0r0lak%2FvBZutgUI8%2FUWOuJeQ1R9Yjqhfv%2Ft2jgwKhkleyc76fqFRyXPeAIYVnteE414%2Bli4CeR1tbJrp7I7N9rLVNX55U6JdHApM6u0zSaGeaFgHAboJMzJWyO83NaA%3D%3D%7Ctkp%3ABlBMUOiUrcuBaA
+2026-08-17 01:34:56,239 | DEBUG    | ebay_automation | click:44 | Clicking: Add to Cart
+2026-08-17 01:34:59,232 | INFO     | ebay_automation | _capture_overlay_subtotal:484 | Overlay subtotal: $46.90
+2026-08-17 01:34:59,233 | INFO     | ebay_automation | _click_add_to_cart:465 | Item added to cart (overlay confirmed)
+2026-08-17 01:35:01,236 | INFO     | ebay_automation | take_screenshot:28 | Screenshot saved: C:\Users\Noah\Documents\projects\AI_demo\ebay-automation\reports\screenshots\item_3_added_to_cart_20260817_013459.png
+2026-08-17 01:35:01,236 | INFO     | ebay_automation | add_items_to_cart:327 |   [3] Added to cart | price=US $22.50 | overlay_subtotal=$46.90
+2026-08-17 01:35:04,673 | INFO     | ebay_automation | add_items_to_cart:305 |   [4/5] Opening product...
+2026-08-17 01:35:04,673 | INFO     | ebay_automation | navigate:28 | Navigating to: https://www.ebay.com/itm/147452421086?_skw=shoes&itmmeta=01M06BB98QAHH1958GHDQS7M5Q&hash=item2254d963de:g:6RoAAeSwXiNqX-ve&itmprp=enc%3AAQALAAAAwGfYFPkwiKCW4ZNSs2u11xCaYliDZb3Y8UK05aSlw7oQXoDcXPMKi6EEPHnMivMuQLeyC6gNHn9sGxRU9MWjgWXlM5amB57rldQhxANSFmb8oeVPJYFE30lP2ED5Cd8BaoEzrjJpDUkxlEJ7TDBDFRD9pEg7Z40F7ir7Sv0snGZkcTBnViJ0n6NKR8JlVTZO4BJWj4Ez5ugkekk5xS%2F1AMzXGVjgX3wAQ7ICrVGk2hlvYV2465j3uHKIxnwb%2FXXRTA%3D%3D%7Ctkp%3ABlBMUOiUrcuBaA
+2026-08-17 01:35:20,186 | DEBUG    | ebay_automation | click:44 | Clicking: Add to Cart
+2026-08-17 01:35:23,513 | INFO     | ebay_automation | _capture_overlay_subtotal:484 | Overlay subtotal: $57.58
+2026-08-17 01:35:23,513 | INFO     | ebay_automation | _click_add_to_cart:465 | Item added to cart (overlay confirmed)
+2026-08-17 01:35:25,449 | INFO     | ebay_automation | take_screenshot:28 | Screenshot saved: C:\Users\Noah\Documents\projects\AI_demo\ebay-automation\reports\screenshots\item_4_added_to_cart_20260817_013523.png
+2026-08-17 01:35:25,449 | INFO     | ebay_automation | add_items_to_cart:327 |   [4] Added to cart | price=US $25.20 | overlay_subtotal=$57.58
+2026-08-17 01:35:30,329 | INFO     | ebay_automation | add_items_to_cart:305 |   [5/5] Opening product...
+2026-08-17 01:35:30,329 | INFO     | ebay_automation | navigate:28 | Navigating to: https://www.ebay.com/itm/236305831395?_skw=shoes&itmmeta=01M06BB98Q59E8M3DNYA3APYG8&hash=item3704ecd5e3:g:i4gAAeSwyj1ouGtZ&itmprp=enc%3AAQALAAAA4GfYFPkwiKCW4ZNSs2u11xBgO9jWY4D0u%2BP80NNqjBqmjcQXmdV%2FzxAiwdR1UhE5FlLyIdC%2FTiHSLdcl6eNy0FV5QHJKNegq8KsjdTaSj7HED8vMTMOtI5QoR0pYjYjdhWpU%2BRgoB2KWv8LsoTLRxWUEZEafAVUW%2BYYp8%2BdRXo2aDsd3FIuyWy3XhGsCWYSAhfiQgjm502KnHMNs50edfoCWGYxo4fsEEundJZgdQ1p6FvpZTswTwGC1jS1rbrScxMpSym7blIEpTg26YTYaR2CauvuyxxSi%2BVBO%2Bnb3kojn%7Ctkp%3ABk9SR-iUrcuBaA
+2026-08-17 01:35:46,595 | DEBUG    | ebay_automation | click:44 | Clicking: Add to Cart
+2026-08-17 01:36:02,670 | WARNING  | ebay_automation | _click_add_to_cart:451 | ATC overlay did not appear — item may not have been added
+2026-08-17 01:36:04,120 | INFO     | ebay_automation | take_screenshot:28 | Screenshot saved: C:\Users\Noah\Documents\projects\AI_demo\ebay-automation\reports\screenshots\add_to_cart_no_overlay_20260817_013602.png
+2026-08-17 01:36:04,120 | WARNING  | ebay_automation | add_items_to_cart:338 |   [5] Failed to add to cart
+2026-08-17 01:36:07,322 | INFO     | ebay_automation | add_items_to_cart:344 | addItemsToCart complete: 4/5 added
+2026-08-17 01:36:07,323 | INFO     | ebay_automation | assert_cart_total_not_exceeds:536 | assertCartTotalNotExceeds(budgetPerItem=220, itemsCount=4)
+2026-08-17 01:36:07,323 | INFO     | ebay_automation | assert_cart_total_not_exceeds:547 | Threshold: 220 x 4 = 880
+2026-08-17 01:36:16,067 | INFO     | ebay_automation | take_screenshot:28 | Screenshot saved: C:\Users\Noah\Documents\projects\AI_demo\ebay-automation\reports\screenshots\cart_minicart_hover_20260817_013613.png
+2026-08-17 01:36:16,068 | INFO     | ebay_automation | _read_minicart_total:616 | Minicart Total: 603.81
+2026-08-17 01:36:16,068 | INFO     | ebay_automation | assert_cart_total_not_exceeds:586 | Cart total: 603.81 (source: minicart hover dropdown)
+2026-08-17 01:36:16,068 | INFO     | ebay_automation | assert_cart_total_not_exceeds:587 | Max budget: 880.00
+2026-08-17 01:36:16,068 | INFO     | ebay_automation | assert_cart_total_not_exceeds:595 | PASSED: 603.81 <= 880.00 (source: minicart hover dropdown)
+2026-08-17 01:36:18,892 | INFO     | ebay_automation | take_screenshot:28 | Screenshot saved: C:\Users\Noah\Documents\projects\AI_demo\ebay-automation\reports\screenshots\cart_assertion_passed_20260817_013616.png
+2026-08-17 01:36:18,893 | INFO     | ebay_automation | test_full_shopping_flow:49 | ============================================================
+2026-08-17 01:36:18,893 | INFO     | ebay_automation | test_full_shopping_flow:50 | E2E Test PASSED
+2026-08-17 01:36:18,893 | INFO     | ebay_automation | test_full_shopping_flow:51 | ============================================================
+2026-08-17 01:36:23,725 | INFO     | ebay_automation | context:56 | Trace saved: C:\Users\Noah\Documents\projects\AI_demo\ebay-automation\reports\traces\trace.zip
+2026-08-17 01:36:24,665 | INFO     | ebay_automation | browser:27 | Browser closed

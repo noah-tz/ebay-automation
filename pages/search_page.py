@@ -1,34 +1,30 @@
 """
 Search Page - Element repository for eBay search results page.
+All selectors use XPath. Verified against live eBay DOM via Playwright MCP.
 """
 from pages.base_page import BasePage
 
 
 class SearchPage(BasePage):
-    """Selectors for eBay Search Results page."""
+    """XPath selectors for eBay Search Results page."""
 
-    # Search input
-    SEARCH_INPUT = "#gh-ac"
-    SEARCH_INPUT_FALLBACK = 'input[type="text"][name="_nkw"], input[aria-label*="Search"]'
-    SEARCH_INPUT_PLACEHOLDER = 'input[placeholder*="Search"]'
-    SEARCH_COMBOBOX = '[role="combobox"]'
-    SEARCH_BUTTON = '#gh-btn, button:has-text("Search")'
-    SEARCH_CATEGORY = "#gh-cat"
+    # Search input — eBay uses combobox with id="gh-ac"
+    SEARCH_INPUT = "//input[@id='gh-ac']"
+    SEARCH_INPUT_FALLBACK = "//input[@type='text' and @name='_nkw']"
+    SEARCH_INPUT_PLACEHOLDER = "//input[contains(@placeholder,'Search')]"
+    SEARCH_COMBOBOX = "//*[@role='combobox']"
+    SEARCH_BUTTON = "//button[@id='gh-btn']"
 
-    # XPath selectors for search result items
-    # (per requirement: "שלוף בעזרת xpath את ה-limit פריטים ראשונים")
+    # Search result items (verified: finds 62 items on results page)
     XPATH_RESULT_ITEMS = "//ul[contains(@class,'srp-results')]//li[@data-view]"
     XPATH_ITEM_LINK = ".//a[contains(@class,'s-card__link')]"
     XPATH_ITEM_TITLE = ".//*[contains(@class,'s-card__title')]//span"
     XPATH_ITEM_PRICE = ".//*[contains(@class,'s-card__price') or contains(@class,'su-price')]"
 
-    # CSS fallback
-    CSS_RESULTS_LIST = ".srp-results li[data-view]"
-
-    # Price filter
-    PRICE_MIN_INPUT = 'input[aria-label*="Minimum Value"]'
-    PRICE_MAX_INPUT = 'input[aria-label*="Maximum Value"]'
-    PRICE_SUBMIT_BTN = 'button[aria-label="Submit price range"]'
+    # Price filter UI — verified: uses title attribute, not aria-label for submit
+    PRICE_MIN_INPUT = "//input[contains(@aria-label,'Minimum Value')]"
+    PRICE_MAX_INPUT = "//input[contains(@aria-label,'Maximum Value')]"
+    PRICE_SUBMIT_BTN = "//button[@title='Submit price range']"
 
     # Pagination
-    NEXT_PAGE_BTN = 'a[aria-label*="next" i], a[aria-label*="Next" i]'
+    NEXT_PAGE_BTN = "//a[contains(@aria-label,'next') or contains(@aria-label,'Next')]"

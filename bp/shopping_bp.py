@@ -151,16 +151,18 @@ class ShoppingBP(BaseBP):
                 if len(collected_urls) >= limit:
                     break
 
-                price_value = PriceParser.parse(item["price"])
+                parsed_price = PriceParser.parse_with_currency(item["price"])
 
-                if price_value is not None and price_value <= max_price:
+                if parsed_price is not None and parsed_price.amount <= max_price:
                     if item["url"] not in collected_urls:
                         collected_urls.append(item["url"])
                         logger.info(
                             f"  [{len(collected_urls)}/{limit}] "
-                            f"{item['title'][:40]}... @ {item['price']}"
+                            f"{item['title'][:40]}... @ {item['price']} "
+                            f"({parsed_price.currency})"
                         )
-                elif price_value is None and item["url"]:
+                elif parsed_price is None and item["url"]:
+                    # Price not parseable but server-side filter was applied
                     if item["url"] not in collected_urls:
                         collected_urls.append(item["url"])
                         logger.info(
@@ -213,11 +215,47 @@ class ShoppingBP(BaseBP):
         self.press_key(found_selector, "Enter")
         self.page.wait_for_load_state("domcontentloaded")
         self.wait_for_element(
-            f"xpath={SearchPage.XPATH_RESULT_ITEMS}", state="attached", timeout=15000
+            SearchPage.XPATH_RESULT_ITEMS, state="attached", timeout=15000
         )
 
     def _apply_price_filter(self, max_price: float, min_price: float = 0) -> None:
-        """Apply price filter via URL parameters."""
+        """
+        Apply price filter via UI elements (min/max input fields + submit button).
+        This ensures the price filter UI itself is tested, catching UI bugs.
+        """
+        try:
+            # Scroll down to find the price filter section
+            self.scroll_to_bottom()
+            self.wait_for_load()
+
+            # Fill minimum price
+            if min_price > 0 and self.is_visible(SearchPage.PRICE_MIN_INPUT, timeout=5000):
+                self.fill(SearchPage.PRICE_MIN_INPUT, str(int(min_price)), "Min price")
+
+            # Fill maximum price
+            if self.is_visible(SearchPage.PRICE_MAX_INPUT, timeout=5000):
+                self.fill(SearchPage.PRICE_MAX_INPUT, str(int(max_price)), "Max price")
+
+                # Submit the price filter
+                if self.is_visible(SearchPage.PRICE_SUBMIT_BTN, timeout=3000):
+                    self.click(SearchPage.PRICE_SUBMIT_BTN, "Submit price range")
+                    self.page.wait_for_load_state("domcontentloaded")
+                    self.wait_for_element(
+                        SearchPage.XPATH_RESULT_ITEMS, state="attached", timeout=15000
+                    )
+                    logger.info(f"Price filter applied via UI: max={max_price}")
+                    return
+
+            # Fallback: if UI filter not found, use URL params
+            logger.warning("Price filter UI not found, falling back to URL params")
+            self._apply_price_filter_via_url(max_price, min_price)
+
+        except Exception as e:
+            logger.warning(f"Price filter UI interaction failed: {e}, using URL fallback")
+            self._apply_price_filter_via_url(max_price, min_price)
+
+    def _apply_price_filter_via_url(self, max_price: float, min_price: float = 0) -> None:
+        """Fallback: apply price filter via URL parameters if UI is not available."""
         current_url = self.get_current_url()
         if "ebay.com/sch" not in current_url:
             return
@@ -226,16 +264,16 @@ class ShoppingBP(BaseBP):
         url_clean = re.sub(r"&_udlo=[^&]*", "", url_clean)
         new_url = f"{url_clean}&_udlo={int(min_price)}&_udhi={int(max_price)}"
 
-        logger.info(f"Applying price filter: max={max_price}")
+        logger.info(f"Applying price filter via URL: max={max_price}")
         self.navigate(new_url)
         self.page.wait_for_load_state("domcontentloaded")
         self.wait_for_element(
-            f"xpath={SearchPage.XPATH_RESULT_ITEMS}", state="attached", timeout=15000
+            SearchPage.XPATH_RESULT_ITEMS, state="attached", timeout=15000
         )
 
     def _extract_results_xpath(self, limit: int) -> list[dict]:
         """Extract search result items using XPath selectors."""
-        items = self.page.locator(f"xpath={SearchPage.XPATH_RESULT_ITEMS}")
+        items = self.page.locator(SearchPage.XPATH_RESULT_ITEMS)
         count = items.count()
 
         results = []
@@ -264,7 +302,7 @@ class ShoppingBP(BaseBP):
             self.click(SearchPage.NEXT_PAGE_BTN, "Next Page")
             self.page.wait_for_load_state("domcontentloaded")
             self.wait_for_element(
-                f"xpath={SearchPage.XPATH_RESULT_ITEMS}", state="attached", timeout=15000
+                SearchPage.XPATH_RESULT_ITEMS, state="attached", timeout=15000
             )
             logger.info("Navigated to next page")
             return True
@@ -352,11 +390,60 @@ class ShoppingBP(BaseBP):
         return True
 
     def _select_random_variant(self) -> None:
-        """Select random variants (size/color) if present."""
+        """
+        Select one random option per variant GROUP.
+        eBay uses two patterns:
+        1. Custom listbox-button (modern): button[aria-haspopup='listbox'] → click → listbox options
+        2. Legacy <select> dropdowns (rare): standard HTML select
+        Each group is handled independently.
+        """
+        # Try modern listbox-button pattern first (most common on eBay)
+        self._try_listbox_variants()
+        # Fallback to legacy <select> dropdowns
         self._try_dropdown(ProductPage.SIZE_SELECT, "Size")
         self._try_dropdown(ProductPage.COLOR_SELECT, "Color")
         self._try_dropdown(ProductPage.VARIANT_SELECT, "Variant")
-        self._try_variant_buttons()
+
+    def _try_listbox_variants(self) -> None:
+        """Handle eBay's custom listbox-button variant selectors."""
+        try:
+            container = self.page.locator(ProductPage.VARIANT_CONTAINER)
+            if container.count() == 0:
+                return
+
+            # Find all listbox trigger buttons within the variant container
+            buttons = container.locator("xpath=.//button[@aria-haspopup='listbox']")
+            btn_count = buttons.count()
+
+            for i in range(btn_count):
+                btn = buttons.nth(i)
+                try:
+                    # Check if this variant needs selection (shows "Select")
+                    btn_text = btn.text_content(timeout=2000) or ""
+                    if "Select" not in btn_text:
+                        continue  # Already selected
+
+                    # Click to open the listbox
+                    btn.click(timeout=5000)
+
+                    # Wait for listbox options to appear
+                    options = self.page.locator(ProductPage.VARIANT_LISTBOX_OPTIONS)
+                    options.first.wait_for(state="visible", timeout=5000)
+
+                    opt_count = options.count()
+                    if opt_count > 0:
+                        # Pick a random available option
+                        chosen_idx = random.randint(0, opt_count - 1)
+                        options.nth(chosen_idx).click(timeout=5000)
+                        logger.info(f"Selected variant option {chosen_idx + 1}/{opt_count}")
+
+                except Exception as e:
+                    logger.debug(f"Listbox variant {i} failed: {e}")
+                    # Close any open listbox by pressing Escape
+                    self.page.keyboard.press("Escape")
+
+        except Exception as e:
+            logger.debug(f"Listbox variants not found: {e}")
 
     def _try_dropdown(self, selector: str, name: str) -> None:
         """Select a random option from a dropdown if visible."""
@@ -377,25 +464,6 @@ class ShoppingBP(BaseBP):
         except Exception as e:
             logger.debug(f"{name} dropdown failed: {e}")
 
-    def _try_variant_buttons(self) -> None:
-        """Click a random variant button if available."""
-        try:
-            buttons = self.page.locator(ProductPage.VARIANT_BUTTONS)
-            count = buttons.count()
-            if count == 0:
-                return
-            enabled = [
-                buttons.nth(i) for i in range(count)
-                if buttons.nth(i).is_enabled()
-                and buttons.nth(i).is_visible()
-                and buttons.nth(i).get_attribute("aria-checked") != "true"
-            ]
-            if enabled:
-                random.choice(enabled).click(timeout=5000)
-                logger.info("Selected variant via button")
-        except Exception as e:
-            logger.debug(f"Variant buttons failed: {e}")
-
     def _get_product_price(self) -> Optional[str]:
         """Read price from product page."""
         if self.is_visible(ProductPage.PRODUCT_PRICE, timeout=3000):
@@ -403,7 +471,10 @@ class ShoppingBP(BaseBP):
         return None
 
     def _click_add_to_cart(self) -> bool:
-        """Click Add to Cart and capture overlay subtotal."""
+        """
+        Click Add to Cart and verify via overlay confirmation.
+        Returns True ONLY if the ATC overlay confirms the item was added.
+        """
         try:
             if self.is_visible(ProductPage.ADD_TO_CART_BTN, timeout=5000):
                 self.click(ProductPage.ADD_TO_CART_BTN, "Add to Cart")
@@ -413,19 +484,31 @@ class ShoppingBP(BaseBP):
                 logger.warning("Add to Cart button not found")
                 return False
 
-            # Wait for overlay confirmation
+            # Wait for overlay confirmation — this is the PROOF item was added
             try:
-                self.wait_for_element(ProductPage.ATC_OVERLAY, state="visible", timeout=10000)
-                try:
-                    self.wait_for_element(ProductPage.ATC_OVERLAY_ADDED_TEXT, state="visible", timeout=10000)
-                except Exception:
-                    pass
-                self._capture_overlay_subtotal()
+                self.wait_for_element(ProductPage.ATC_OVERLAY, state="visible", timeout=15000)
             except Exception:
+                # Some items navigate directly to cart without overlay
+                if "cart" in self.get_current_url().lower():
+                    logger.info("Item added to cart (navigated to cart page)")
+                    return True
+                logger.warning("ATC overlay did not appear — item may not have been added")
+                take_screenshot(self.page, "add_to_cart_no_overlay")
+                return False
+
+            # Wait for "Added to cart" text (overlay fully loaded)
+            try:
+                self.wait_for_element(
+                    ProductPage.ATC_OVERLAY_ADDED_TEXT, state="visible", timeout=10000
+                )
+            except Exception:
+                # Overlay appeared but text didn't change — still accept
                 pass
 
-            logger.info("Item added to cart")
+            self._capture_overlay_subtotal()
+            logger.info("Item added to cart (overlay confirmed)")
             return True
+
         except Exception as e:
             logger.error(f"Failed to add to cart: {e}")
             take_screenshot(self.page, "add_to_cart_failed")

@@ -15,8 +15,13 @@ venv/
 .vscode/
 *.swp
 
-# Reports (all generated content)
-reports/
+# Reports (keep only summary files for reviewer, ignore bulk data)
+reports/screenshots/
+reports/traces/
+reports/allure-results/
+reports/allure-report/
+reports/assets/
+reports/logs/
 
 # OS
 .DS_Store
