@@ -382,7 +382,16 @@ class ShoppingBP(BaseBP):
 
     def _open_product(self, url: str) -> bool:
         """Navigate to product page, check availability."""
-        self.navigate(url)
+        try:
+            self.navigate(url)
+        except Exception as e:
+            # eBay sometimes aborts navigation (rate limiting, redirect)
+            logger.warning(f"Navigation error: {e}")
+            # Retry once
+            try:
+                self.page.wait_for_load_state("domcontentloaded", timeout=5000)
+            except Exception:
+                return False
         self.wait_for_load()
         if self.is_visible(ProductPage.ITEM_ENDED, timeout=2000):
             logger.warning("Item listing has ended, skipping")
@@ -411,7 +420,7 @@ class ShoppingBP(BaseBP):
             if container.count() == 0:
                 return
 
-            # Find all listbox trigger buttons within the variant container
+            # Find all listbox trigger buttons
             buttons = container.locator("xpath=.//button[@aria-haspopup='listbox']")
             btn_count = buttons.count()
 
@@ -423,23 +432,27 @@ class ShoppingBP(BaseBP):
                     if "Select" not in btn_text:
                         continue  # Already selected
 
-                    # Click to open the listbox
+                    # Click to open the listbox dropdown
                     btn.click(timeout=5000)
 
-                    # Wait for listbox options to appear
-                    options = self.page.locator(ProductPage.VARIANT_LISTBOX_OPTIONS)
-                    options.first.wait_for(state="visible", timeout=5000)
+                    # Wait for visible options to appear (not the listbox container)
+                    visible_options = self.page.locator("[role='listbox'] [role='option']:visible")
+                    visible_options.first.wait_for(state="visible", timeout=5000)
 
-                    opt_count = options.count()
-                    if opt_count > 0:
-                        # Pick a random available option
-                        chosen_idx = random.randint(0, opt_count - 1)
-                        options.nth(chosen_idx).click(timeout=5000)
-                        logger.info(f"Selected variant option {chosen_idx + 1}/{opt_count}")
+                    opt_count = visible_options.count()
+                    if opt_count > 1:
+                        # Skip first option ("Select") and pick a random one
+                        chosen_idx = random.randint(1, min(opt_count - 1, 5))
+                        visible_options.nth(chosen_idx).click(timeout=5000)
+                        logger.info(f"Selected variant from group {i + 1}")
+                    elif opt_count == 1:
+                        visible_options.first.click(timeout=5000)
+                        logger.info(f"Selected only option in group {i + 1}")
+                    else:
+                        self.page.keyboard.press("Escape")
 
                 except Exception as e:
                     logger.debug(f"Listbox variant {i} failed: {e}")
-                    # Close any open listbox by pressing Escape
                     self.page.keyboard.press("Escape")
 
         except Exception as e:
