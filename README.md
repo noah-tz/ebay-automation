@@ -92,11 +92,11 @@ pytest
 # Run specific test
 pytest tests/test_ebay_e2e.py::TestEbayE2EFlow::test_full_shopping_flow
 
-# Run data-driven tests only
-pytest tests/test_ebay_e2e.py::TestEbayDataDriven
-
 # Run with visible browser (non-headless)
-HEADLESS=false pytest
+$env:HEADLESS="false"; pytest
+
+# Run headless (CI mode)
+$env:HEADLESS="true"; pytest
 
 # Generate Allure report manually (after running tests)
 allure generate reports/allure-results -o reports/allure-report --clean
