@@ -32,6 +32,7 @@ class AddToCartResult:
 
     added_count: int = 0
     collected_prices: list[float] = field(default_factory=list)
+    collected_currencies: list[str] = field(default_factory=list)
     last_overlay_subtotal: Optional[str] = None
     skipped_urls: list[str] = field(default_factory=list)
 
@@ -48,6 +49,7 @@ class ShoppingBP(BaseBP):
     def __init__(self, page: Page):
         super().__init__(page)
         self._collected_prices: list[float] = []
+        self._collected_currencies: list[str] = []
         self._overlay_subtotal_text: Optional[str] = None
 
     # ══════════════════════════════════════════════════════════════
@@ -351,9 +353,10 @@ class ShoppingBP(BaseBP):
                 result.added_count += 1
 
                 if price_text:
-                    price_val = PriceParser.parse(price_text)
-                    if price_val is not None:
-                        result.collected_prices.append(price_val)
+                    parsed = PriceParser.parse_with_currency(price_text)
+                    if parsed is not None:
+                        result.collected_prices.append(parsed.amount)
+                        result.collected_currencies.append(parsed.currency)
 
                 overlay_sub = self._overlay_subtotal_text
                 if overlay_sub:
@@ -459,7 +462,7 @@ class ShoppingBP(BaseBP):
             logger.debug(f"Listbox variants not found: {e}")
 
     def _try_dropdown(self, selector: str, name: str) -> None:
-        """Select a random option from a dropdown if visible."""
+        """Select a random option from a dropdown if visible, and validate selection."""
         try:
             if not self.is_visible(selector, timeout=2000):
                 return
@@ -472,8 +475,14 @@ class ShoppingBP(BaseBP):
                 and opt.get_attribute("disabled") is None
             ]
             if valid:
-                self.select_option(selector, random.choice(valid))
-                logger.info(f"Selected {name}")
+                chosen = random.choice(valid)
+                self.select_option(selector, chosen)
+                # Validate: read back the selected value
+                actual = self.page.locator(selector).first.input_value(timeout=3000)
+                if actual == chosen:
+                    logger.info(f"Selected {name}: {chosen} (validated)")
+                else:
+                    logger.warning(f"{name} selection not confirmed: expected={chosen}, got={actual}")
         except Exception as e:
             logger.debug(f"{name} dropdown failed: {e}")
 
@@ -515,7 +524,13 @@ class ShoppingBP(BaseBP):
                     ProductPage.ATC_OVERLAY_ADDED_TEXT, state="visible", timeout=10000
                 )
             except Exception:
-                # Overlay appeared but text didn't change — still accept
+                # Check if overlay shows an error message instead
+                overlay_text = self.get_inner_text(ProductPage.ATC_OVERLAY, timeout=3000)
+                if "try again" in overlay_text.lower() or "error" in overlay_text.lower():
+                    logger.warning("ATC overlay shows error message — item not added")
+                    take_screenshot(self.page, "add_to_cart_error_overlay")
+                    return False
+                # Overlay appeared but "Added to cart" text not found — still accept
                 pass
 
             self._capture_overlay_subtotal()
@@ -570,6 +585,7 @@ class ShoppingBP(BaseBP):
         budget_per_item: float,
         items_count: int,
         collected_prices: list[float] | None = None,
+        collected_currencies: list[str] | None = None,
         overlay_subtotal: str | None = None,
     ) -> None:
         """
@@ -597,6 +613,8 @@ class ShoppingBP(BaseBP):
 
         if collected_prices:
             self._collected_prices = collected_prices
+        if collected_currencies:
+            self._collected_currencies = collected_currencies
         if overlay_subtotal:
             self._overlay_subtotal_text = overlay_subtotal
 
@@ -619,11 +637,28 @@ class ShoppingBP(BaseBP):
                     source = "cart page"
                     take_screenshot(self.page, "cart_page_subtotal")
 
-        # Strategy 3: Collected prices
+        # Strategy 3: Collected prices (only same-currency items)
         if cart_total is None and self._collected_prices:
-            cart_total = sum(self._collected_prices)
-            source = f"sum of {len(self._collected_prices)} item prices"
-            take_screenshot(self.page, "cart_verification_prices")
+            # Determine dominant currency from collected prices
+            from collections import Counter
+            if hasattr(self, '_collected_currencies') and self._collected_currencies:
+                currency_counts = Counter(self._collected_currencies)
+                dominant_currency = currency_counts.most_common(1)[0][0]
+                same_currency_prices = [
+                    p for p, c in zip(self._collected_prices, self._collected_currencies)
+                    if c == dominant_currency
+                ]
+            else:
+                same_currency_prices = self._collected_prices
+                dominant_currency = "unknown"
+
+            if same_currency_prices:
+                cart_total = sum(same_currency_prices)
+                source = (
+                    f"sum of {len(same_currency_prices)} item prices "
+                    f"({dominant_currency})"
+                )
+                take_screenshot(self.page, "cart_verification_prices")
 
         # Strategy 4: Overlay subtotal
         if cart_total is None and self._overlay_subtotal_text:
@@ -736,5 +771,6 @@ class ShoppingBP(BaseBP):
             budget_per_item=max_price,
             items_count=result.added_count,
             collected_prices=result.collected_prices,
+            collected_currencies=result.collected_currencies,
             overlay_subtotal=result.last_overlay_subtotal,
         )
