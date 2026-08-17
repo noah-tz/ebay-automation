@@ -132,9 +132,8 @@ playwright show-trace reports/traces/trace.zip
   3. Collected item prices — sums prices verified during the add-to-cart phase.
   4. Overlay subtotal — uses the last ATC overlay subtotal text.
   - **For full cart page verification**: provide `EBAY_USERNAME` and `EBAY_PASSWORD` in `.env`
-- **Pagination limit**: Search pagination is capped at 3 pages maximum to avoid excessive load on eBay and keep test runtime reasonable. The spec requires collecting items "until limit is reached or pages run out" — in practice, the price filter ensures sufficient results on the first 1–2 pages.
-- **Currency**: Prices displayed depend on eBay's geo-detection. The parser handles USD, ILS, EUR, GBP formats.
-- **Dynamic UI**: eBay frequently changes its UI. Selectors use `data-testid`, `aria-label`, and semantic patterns for robustness.
+- **Currency**: Prices displayed depend on eBay's geo-detection. The parser identifies USD, ILS, EUR, GBP and only compares same-currency values to avoid cross-currency mismatches.
+- **Dynamic UI**: eBay frequently changes its UI. Selectors use XPath with `data-testid`, `aria-label`, and structural patterns for robustness.
 - **Rate Limiting**: eBay may throttle rapid requests. `SLOW_MO=100` is set by default. Increase if encountering blocks.
 - **Viewport**: Dynamically detects screen resolution on Windows to match the actual display (avoids mobile/responsive layouts). Falls back to configured values on Linux/Mac.
-- **Items with unparseable prices**: If the server-side price filter was applied but the client-side parser cannot extract a numeric price (e.g., "Price varies"), the item is still included (marked "unverified") since eBay's filter already validated it.
+- **Cart accumulation (Guest Mode)**: In guest mode, eBay's cart persists across browser contexts via cookies. If running multiple test iterations in the same browser session, the cart accumulates items from all runs. Each test uses a fresh `BrowserContext` to isolate cookies.

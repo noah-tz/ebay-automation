@@ -143,9 +143,10 @@ class ShoppingBP(BaseBP):
 
         # Collect items via XPath with pagination
         collected_urls: list[str] = []
-        max_pages = 3  # Documented assumption in README
 
-        for page_num in range(1, max_pages + 1):
+        page_num = 0
+        while len(collected_urls) < limit:
+            page_num += 1
             logger.info(f"Processing page {page_num}...")
             results = self._extract_results_xpath(limit)
 
@@ -163,25 +164,16 @@ class ShoppingBP(BaseBP):
                             f"{item['title'][:40]}... @ {item['price']} "
                             f"({parsed_price.currency})"
                         )
-                elif parsed_price is None and item["url"]:
-                    # Price not parseable but server-side filter was applied
-                    if item["url"] not in collected_urls:
-                        collected_urls.append(item["url"])
-                        logger.info(
-                            f"  [{len(collected_urls)}/{limit}] "
-                            f"{item['title'][:40]}... @ {item['price']} (unverified)"
-                        )
 
             if len(collected_urls) >= limit:
                 break
 
-            # Pagination
-            if page_num < max_pages and self._has_next_page():
+            # Pagination: try next page if available
+            if self._has_next_page():
                 if not self._go_to_next_page():
                     break
             else:
-                if len(collected_urls) < limit:
-                    logger.info("No more pages available")
+                logger.info("No more pages available")
                 break
 
         logger.info(f"searchItemsByNameUnderPrice: found {len(collected_urls)} items")
